@@ -461,12 +461,6 @@
         },
 
         callExpression: function(base, args) {
-            if (base.type === 'Identifier') {
-                /** @type {string} */
-                const value = base.name
-                if (value === '$') return this.sopFieldsCallExpression(base, args)
-                else if (value === '$$') return this.sopOutputCallExpression(base, args)
-            }
             return {
                 type: 'CallExpression',
                 base: base,
@@ -496,22 +490,6 @@
                 type: 'Comment',
                 value: value,
                 raw: raw
-            }
-        },
-
-        sopFieldsCallExpression: function(base, args) {
-            return {
-                type: 'SopFieldsCallExpression',
-                base,
-                arguments: args
-            }
-        },
-
-        sopOutputCallExpression: function(base, args) {
-            return {
-                type: 'SopOutputCallExpression',
-                base,
-                arguments: args
             }
         }
     })
