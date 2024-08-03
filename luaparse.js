@@ -453,12 +453,6 @@
         },
 
         indexExpression: function(base, index) {
-            if (base.type === 'Identifier') {
-                /** @type {string} */
-                const value = base.name
-                if (value === '$') return this.sopFieldsCallExpression(base, index)
-                else if (value === '$$') return this.sopOutputCallExpression(base, index)
-            }
             return {
                 type: 'IndexExpression',
                 base: base,
@@ -467,6 +461,12 @@
         },
 
         callExpression: function(base, args) {
+            if (base.type === 'Identifier') {
+                /** @type {string} */
+                const value = base.name
+                if (value === '$') return this.sopFieldsCallExpression(base, args)
+                else if (value === '$$') return this.sopOutputCallExpression(base, args)
+            }
             return {
                 type: 'CallExpression',
                 base: base,
