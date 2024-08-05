@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 let input, options, length, features, encodingMode
 
@@ -62,7 +62,7 @@ function encodeUTF8(codepoint, highMask) {
 }
 
 function toHex(num, digits) {
-    const result = num.toString(16)
+    let result = num.toString(16)
     while (result.length < digits) result = '0' + result
     return result
 }
@@ -323,15 +323,11 @@ export const ast = {
 
     literal: function(type, value, raw) {
         type =
-            type === StringLiteral
-                ? 'StringLiteral'
-                : type === NumericLiteral
-                ? 'NumericLiteral'
-                : type === BooleanLiteral
-                ? 'BooleanLiteral'
-                : type === NilLiteral
-                ? 'NilLiteral'
-                : 'VarargLiteral'
+            (type === StringLiteral) ? 'StringLiteral'
+                : type === NumericLiteral ? 'NumericLiteral'
+                : type === BooleanLiteral ? 'BooleanLiteral'
+                : type === NilLiteral ? 'NilLiteral'
+                : 'VarargLiteral';
 
         return {
             type: type,
@@ -451,10 +447,10 @@ function finishNode(node) {
 // Helpers
 // -------
 
-const slice = Array.prototype.slice,
+let slice = Array.prototype.slice,
     toString = Object.prototype.toString
-const indexOf = /* istanbul ignore next */ function(array, element) {
-    for (const i = 0, length = array.length; i < length; ++i) {
+let indexOf = /* istanbul ignore next */ function(array, element) {
+    for (let i = 0, length = array.length; i < length; ++i) {
         if (array[i] === element) return i
     }
     return -1
@@ -470,7 +466,7 @@ if (Array.prototype.indexOf)
 // with a matching property.
 
 function indexOfObject(array, property, element) {
-    for (const i = 0, length = array.length; i < length; ++i) {
+    for (let i = 0, length = array.length; i < length; ++i) {
         if (array[i][property] === element) return i
     }
     return -1
@@ -494,11 +490,11 @@ function sprintf(format) {
 
 // Polyfill for `Object.assign`.
 
-const assign = /* istanbul ignore next */ function(dest) {
+let assign = /* istanbul ignore next */ function(dest) {
     const args = slice.call(arguments, 1);
     let src, prop
 
-    for (const i = 0, length = args.length; i < length; ++i) {
+    for (let i = 0, length = args.length; i < length; ++i) {
         src = args[i]
         /* istanbul ignore else */
         for (prop in src)
@@ -857,7 +853,7 @@ function scanVarargLiteral() {
 // Find the string literal by matching the delimiter marks used.
 
 function scanStringLiteral() {
-    const delimiter = input.charCodeAt(index++),
+    let delimiter = input.charCodeAt(index++),
         beginLine = line,
         beginLineStart = lineStart,
         stringStart = index,
@@ -1007,7 +1003,7 @@ function readInt64Suffix() {
 //     Number := ( Digit + Fraction ) * BinaryExp
 
 function readHexLiteral() {
-    const fraction = 0, // defaults to 0 as it gets summed
+    let fraction = 0, // defaults to 0 as it gets summed
         binaryExponent = 1, // defaults to 1 as it gets multiplied
         binarySign = 1; // positive
     let digit,
@@ -1025,7 +1021,7 @@ function readHexLiteral() {
     digit = parseInt(input.slice(digitStart, index), 16)
 
     // Fraction part is optional.
-    const foundFraction = false
+    let foundFraction = false
     if ('.' === input.charAt(index)) {
         foundFraction = true
         fractionStart = ++index
@@ -1039,7 +1035,7 @@ function readHexLiteral() {
     }
 
     // Binary exponents are optional
-    const foundBinaryExponent = false
+    let foundBinaryExponent = false
     if ('pP'.indexOf(input.charAt(index) || null) >= 0) {
         foundBinaryExponent = true
         ++index
@@ -1072,7 +1068,7 @@ function readHexLiteral() {
 function readDecLiteral() {
     while (isDecDigit(input.charCodeAt(index))) ++index
     // Fraction part is optional
-    const foundFraction = false
+    let foundFraction = false
     if ('.' === input.charAt(index)) {
         foundFraction = true
         ++index
@@ -1081,7 +1077,7 @@ function readDecLiteral() {
     }
 
     // Exponent part is optional.
-    const foundExponent = false
+    let foundExponent = false
     if ('eE'.indexOf(input.charAt(index) || null) >= 0) {
         foundExponent = true
         ++index
@@ -1231,7 +1227,7 @@ function scanComment() {
     tokenStart = index
     index += 2 // --
 
-    const character = input.charAt(index),
+    let character = input.charAt(index),
         content = '',
         isLong = false,
         commentStart = index,
@@ -1276,7 +1272,7 @@ function scanComment() {
 // then appending until an equal depth is found.
 
 function readLongString(isComment) {
-    const level = 0,
+    let level = 0,
         content = '',
         terminator = false;
     let character,
@@ -1307,7 +1303,7 @@ function readLongString(isComment) {
         // if it matches.
         if (']' === character) {
             terminator = true
-            for (const i = 0; i < level; ++i) {
+            for (let i = 0; i < level; ++i) {
                 if ('=' !== input.charAt(index + i)) terminator = false
             }
             if (']' !== input.charAt(index + level)) terminator = false
@@ -1577,7 +1573,7 @@ function FullFlowContext() {
 }
 
 FullFlowContext.prototype.isInLoop = function() {
-    const i = this.scopes.length
+    let i = this.scopes.length
     while (i-- > 0) {
         if (this.scopes[i].isLoop) return true
     }
@@ -1595,7 +1591,7 @@ FullFlowContext.prototype.pushScope = function(isLoop) {
 }
 
 FullFlowContext.prototype.popScope = function() {
-    for (const i = 0; i < this.pendingGotos.length; ++i) {
+    for (let i = 0; i < this.pendingGotos.length; ++i) {
         const theGoto = this.pendingGotos[i]
         if (theGoto.maxDepth >= this.scopes.length)
             if (--theGoto.maxDepth <= 0) raise(theGoto.token, errors.labelNotVisible, theGoto.target)
@@ -1607,7 +1603,7 @@ FullFlowContext.prototype.popScope = function() {
 FullFlowContext.prototype.addGoto = function(target, token) {
     const localCounts = []
 
-    for (const i = 0; i < this.scopes.length; ++i) {
+    for (let i = 0; i < this.scopes.length; ++i) {
         const scope = this.scopes[i]
         localCounts.push(scope.locals.length)
         if (Object.prototype.hasOwnProperty.call(scope.labels, target)) return
@@ -1629,7 +1625,7 @@ FullFlowContext.prototype.addLabel = function(name, token) {
     } else {
         const newGotos = []
 
-        for (const i = 0; i < this.pendingGotos.length; ++i) {
+        for (let i = 0; i < this.pendingGotos.length; ++i) {
             const theGoto = this.pendingGotos[i]
 
             if (theGoto.maxDepth >= this.scopes.length && theGoto.target === name) {
@@ -1665,7 +1661,7 @@ FullFlowContext.prototype.currentScope = function() {
 FullFlowContext.prototype.raiseDeferredErrors = function() {
     const scope = this.currentScope()
     const bads = scope.deferredGotos
-    for (const i = 0; i < bads.length; ++i) {
+    for (let i = 0; i < bads.length; ++i) {
         const theGoto = bads[i]
         raise(
             theGoto.token,
@@ -1926,7 +1922,7 @@ function parseReturnStatement(flowContext) {
     const expressions = []
 
     if ('end' !== token.value) {
-        const expression = parseExpression(flowContext)
+        let expression = parseExpression(flowContext)
         if (null != expression) {
             expressions.push(expression)
             while (consume(',')) {
@@ -2003,7 +1999,7 @@ function parseIfStatement(flowContext) {
 //     explist ::= exp {',' exp}
 
 function parseForStatement(flowContext) {
-    const variable = parseIdentifier();
+    let variable = parseIdentifier();
     let body
 
     // The start-identifier is local.
@@ -2036,7 +2032,7 @@ function parseForStatement(flowContext) {
     // If not, it's a Generic For Statement
     else {
         // The namelist can contain one or more identifiers.
-        const variables = [variable]
+        let variables = [variable]
         while (consume(',')) {
             variable = parseIdentifier()
             // Each variable in the namelist is locally scoped.
@@ -2099,7 +2095,7 @@ function parseLocalStatement(flowContext) {
         // Therefore assignments can't use their declarator. And the identifiers
         // shouldn't be added to the scope until the statement is complete.
         if (options.scope) {
-            for (const i = 0, l = variables.length; i < l; ++i) {
+            for (let i = 0, l = variables.length; i < l; ++i) {
                 scopeIdentifier(variables[i])
             }
         }
@@ -2573,7 +2569,7 @@ function parseCallExpression(base, flowContext) {
 
                 // List of expressions
                 const expressions = []
-                const expression = parseExpression(flowContext)
+                let expression = parseExpression(flowContext)
                 if (null != expression) {
                     expressions.push(expression)
                     while (consume(',')) {
