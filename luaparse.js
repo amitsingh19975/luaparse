@@ -1,6 +1,6 @@
 'use strict'
 
-var input, options, length, features, encodingMode
+let input, options, length, features, encodingMode
 
 // Options can be set either globally on the parser object through
 // defaultOptions, or during the parse call.
@@ -62,20 +62,20 @@ function encodeUTF8(codepoint, highMask) {
 }
 
 function toHex(num, digits) {
-    var result = num.toString(16)
+    const result = num.toString(16)
     while (result.length < digits) result = '0' + result
     return result
 }
 
 function checkChars(rx) {
     return function(s) {
-        var m = rx.exec(s)
+        const m = rx.exec(s)
         if (!m) return s
         raise(null, errors.invalidCodeUnit, toHex(m[0].charCodeAt(0), 4).toUpperCase())
     }
 }
 
-var encodingModes = {
+const encodingModes = {
     // `pseudo-latin1` encoding mode: assume the input was decoded with the latin1 encoding
     // WARNING: latin1 does **NOT** mean cp1252 here like in the bone-headed WHATWG standard;
     // it means true ISO/IEC 8859-1 identity-mapped to Basic Latin and Latin-1 Supplement blocks
@@ -121,7 +121,7 @@ var encodingModes = {
 // The available tokens expressed as enum flags so they can be checked with
 // bitwise operations.
 
-var EOF = 1,
+const EOF = 1,
     StringLiteral = 2,
     Keyword = 4,
     Identifier = 8,
@@ -167,7 +167,8 @@ export const errors = {
     gotoJumpInLocalScope: "<goto %1> jumps into the scope of local '%2'",
     cannotUseVararg: "cannot use '...' outside a vararg function near '%1'",
     invalidCodeUnit: 'code unit U+%1 is not allowed in the current encoding mode',
-    tooManyDollars: 'Too many dollars were found. Expected "$" or "$$", but found "%1"'
+    tooManyDollars: 'Too many dollars were found. Expected "$" or "$$", but found "%1"',
+    invalidDollarIdentifier: '"%1" is not a valid dollar identifier. Expected "$(...)", "$$(...)", or "$self".'
 }
 
 // ### Abstract Syntax Tree
@@ -367,7 +368,7 @@ export const ast = {
         }
     },
     binaryExpression: function(operator, left, right) {
-        var type = 'and' === operator || 'or' === operator ? 'LogicalExpression' : 'BinaryExpression'
+        const type = 'and' === operator || 'or' === operator ? 'LogicalExpression' : 'BinaryExpression'
 
         return {
             type: type,
@@ -439,7 +440,7 @@ export const ast = {
 function finishNode(node) {
     // Pop a `Marker` off the location-array and attach its location data.
     if (trackLocations) {
-        var location = locations.pop()
+        const location = locations.pop()
         location.complete()
         location.bless(node)
     }
@@ -450,10 +451,10 @@ function finishNode(node) {
 // Helpers
 // -------
 
-var slice = Array.prototype.slice,
+const slice = Array.prototype.slice,
     toString = Object.prototype.toString
-var indexOf = /* istanbul ignore next */ function(array, element) {
-    for (var i = 0, length = array.length; i < length; ++i) {
+const indexOf = /* istanbul ignore next */ function(array, element) {
+    for (const i = 0, length = array.length; i < length; ++i) {
         if (array[i] === element) return i
     }
     return -1
@@ -469,7 +470,7 @@ if (Array.prototype.indexOf)
 // with a matching property.
 
 function indexOfObject(array, property, element) {
-    for (var i = 0, length = array.length; i < length; ++i) {
+    for (const i = 0, length = array.length; i < length; ++i) {
         if (array[i][property] === element) return i
     }
     return -1
@@ -484,7 +485,7 @@ function indexOfObject(array, property, element) {
 //     sprintf('Unexpected %2 in %1.', 'token', 'function');
 
 function sprintf(format) {
-    var args = slice.call(arguments, 1)
+    const args = slice.call(arguments, 1)
     format = format.replace(/%(\d)/g, function(match, index) {
         return '' + args[index - 1] || /* istanbul ignore next */ ''
     })
@@ -493,12 +494,11 @@ function sprintf(format) {
 
 // Polyfill for `Object.assign`.
 
-var assign = /* istanbul ignore next */ function(dest) {
-    var args = slice.call(arguments, 1),
-        src,
-        prop
+const assign = /* istanbul ignore next */ function(dest) {
+    const args = slice.call(arguments, 1);
+    let src, prop
 
-    for (var i = 0, length = args.length; i < length; ++i) {
+    for (const i = 0, length = args.length; i < length; ++i) {
         src = args[i]
         /* istanbul ignore else */
         for (prop in src)
@@ -542,9 +542,8 @@ function fixupError(e) {
 //     raise(token, "expected %1 near %2", '[', token.value);
 
 function raise(token) {
-    var message = sprintf.apply(null, slice.call(arguments, 1)),
-        error,
-        col
+    const message = sprintf.apply(null, slice.call(arguments, 1));
+    let error, col
 
     if (token === null || typeof token.line === 'undefined') {
         col = index - lineStart + 1
@@ -563,7 +562,7 @@ function raise(token) {
 }
 
 function tokenValue(token) {
-    var raw = input.slice(token.range[0], token.range[1])
+    const raw = input.slice(token.range[0], token.range[1])
     if (raw) return raw
     return token.value
 }
@@ -593,9 +592,9 @@ function raiseUnexpectedToken(type, token) {
 // If there's no token in the buffer it means we have reached <eof>.
 
 function unexpected(found) {
-    var near = tokenValue(lookahead)
+    const near = tokenValue(lookahead)
     if ('undefined' !== typeof found.type) {
-        var type
+        let type
         switch (found.type) {
             case StringLiteral:
                 type = 'string'
@@ -644,7 +643,7 @@ function unexpected(found) {
 //
 // `lex()` starts lexing and returns the following token in the stream.
 
-var index, token, previousToken, lookahead, comments, tokenStart, line, lineStart
+let index, token, previousToken, lookahead, comments, tokenStart, line, lineStart
 
 export function lex() {
     skipWhiteSpace()
@@ -663,7 +662,7 @@ export function lex() {
             range: [index, index]
         }
 
-    var charCode = input.charCodeAt(index),
+    const charCode = input.charCodeAt(index),
         next = input.charCodeAt(index + 1)
 
     // Memorize the range index where the token begins.
@@ -758,7 +757,7 @@ export function lex() {
 // single line.
 
 function consumeEOL() {
-    var charCode = input.charCodeAt(index),
+    const charCode = input.charCodeAt(index),
         peekCharCode = input.charCodeAt(index + 1)
 
     if (isLineTerminator(charCode)) {
@@ -775,7 +774,7 @@ function consumeEOL() {
 
 function skipWhiteSpace() {
     while (index < length) {
-        var charCode = input.charCodeAt(index)
+        const charCode = input.charCodeAt(index)
         if (isWhiteSpace(charCode)) {
             ++index
         } else if (!consumeEOL()) {
@@ -790,14 +789,20 @@ function skipWhiteSpace() {
 
 function scanIdentifierOrKeyword() {
     /** @type {string} */
-    var value, type
+    let value, type
 
     // Slicing the input string is prefered before string concatenation in a
     // loop for performance reasons.
     while (isIdentifierPart(input.charCodeAt(++index)));
     value = encodingMode.fixup(input.slice(tokenStart, index))
-    if (value.startsWith('$') && value.length > 2) {
-        raise(null, errors.tooManyDollars, value)
+    if (value.startsWith('$')) {
+        let count = 0;
+        for (const c of value) {
+            if (c !== '$') break;
+            ++count;
+        }
+        if (count > 2) raise(null, errors.tooManyDollars, value);
+        if (count !== value.length && value !== '$self') raise(null, errors.invalidDollarIdentifier, value);
     }
 
     // Decide on the token type and possibly cast the value.
@@ -852,12 +857,12 @@ function scanVarargLiteral() {
 // Find the string literal by matching the delimiter marks used.
 
 function scanStringLiteral() {
-    var delimiter = input.charCodeAt(index++),
+    const delimiter = input.charCodeAt(index++),
         beginLine = line,
         beginLineStart = lineStart,
         stringStart = index,
-        string = encodingMode.discardStrings ? null : '',
-        charCode
+        string = encodingMode.discardStrings ? null : '';
+    let charCode
 
     for (;;) {
         charCode = input.charCodeAt(index++)
@@ -871,10 +876,10 @@ function scanStringLiteral() {
         if (92 === charCode) {
             // backslash
             if (!encodingMode.discardStrings) {
-                var beforeEscape = input.slice(stringStart, index - 1)
+                const beforeEscape = input.slice(stringStart, index - 1)
                 string += encodingMode.fixup(beforeEscape)
             }
-            var escapeValue = readEscapeSequence()
+            const escapeValue = readEscapeSequence()
             if (!encodingMode.discardStrings) string += escapeValue
             stringStart = index
         }
@@ -900,7 +905,7 @@ function scanStringLiteral() {
 // exception.
 
 function scanLongStringLiteral() {
-    var beginLine = line,
+    const beginLine = line,
         beginLineStart = lineStart,
         string = readLongString(false)
     // Fail if it's not a multiline literal.
@@ -924,12 +929,12 @@ function scanLongStringLiteral() {
 // If a hexadecimal number is encountered, it will be converted.
 
 function scanNumericLiteral() {
-    var character = input.charAt(index),
+    const character = input.charAt(index),
         next = input.charAt(index + 1)
 
-    var literal = '0' === character && 'xX'.indexOf(next || null) >= 0 ? readHexLiteral() : readDecLiteral()
+    const literal = '0' === character && 'xX'.indexOf(next || null) >= 0 ? readHexLiteral() : readDecLiteral()
 
-    var foundImaginaryUnit = readImaginaryUnitSuffix(),
+    const foundImaginaryUnit = readImaginaryUnitSuffix(),
         foundInt64Suffix = readInt64Suffix()
 
     if (foundInt64Suffix && (foundImaginaryUnit || literal.hasFractionPart)) {
@@ -1002,10 +1007,10 @@ function readInt64Suffix() {
 //     Number := ( Digit + Fraction ) * BinaryExp
 
 function readHexLiteral() {
-    var fraction = 0, // defaults to 0 as it gets summed
+    const fraction = 0, // defaults to 0 as it gets summed
         binaryExponent = 1, // defaults to 1 as it gets multiplied
-        binarySign = 1, // positive
-        digit,
+        binarySign = 1; // positive
+    let digit,
         fractionStart,
         exponentStart,
         digitStart
@@ -1020,7 +1025,7 @@ function readHexLiteral() {
     digit = parseInt(input.slice(digitStart, index), 16)
 
     // Fraction part is optional.
-    var foundFraction = false
+    const foundFraction = false
     if ('.' === input.charAt(index)) {
         foundFraction = true
         fractionStart = ++index
@@ -1034,7 +1039,7 @@ function readHexLiteral() {
     }
 
     // Binary exponents are optional
-    var foundBinaryExponent = false
+    const foundBinaryExponent = false
     if ('pP'.indexOf(input.charAt(index) || null) >= 0) {
         foundBinaryExponent = true
         ++index
@@ -1067,7 +1072,7 @@ function readHexLiteral() {
 function readDecLiteral() {
     while (isDecDigit(input.charCodeAt(index))) ++index
     // Fraction part is optional
-    var foundFraction = false
+    const foundFraction = false
     if ('.' === input.charAt(index)) {
         foundFraction = true
         ++index
@@ -1076,7 +1081,7 @@ function readDecLiteral() {
     }
 
     // Exponent part is optional.
-    var foundExponent = false
+    const foundExponent = false
     if ('eE'.indexOf(input.charAt(index) || null) >= 0) {
         foundExponent = true
         ++index
@@ -1095,28 +1100,28 @@ function readDecLiteral() {
 }
 
 function readUnicodeEscapeSequence() {
-    var sequenceStart = index++
+    const sequenceStart = index++
 
     if (input.charAt(index++) !== '{') raise(null, errors.braceExpected, '{', '\\' + input.slice(sequenceStart, index))
     if (!isHexDigit(input.charCodeAt(index)))
         raise(null, errors.hexadecimalDigitExpected, '\\' + input.slice(sequenceStart, index))
 
     while (input.charCodeAt(index) === 0x30) ++index
-    var escStart = index
+    const escStart = index
 
     while (isHexDigit(input.charCodeAt(index))) {
         ++index
         if (index - escStart > 6) raise(null, errors.tooLargeCodepoint, '\\' + input.slice(sequenceStart, index))
     }
 
-    var b = input.charAt(index++)
+    const b = input.charAt(index++)
     if (b !== '}') {
         if (b === '"' || b === "'") raise(null, errors.braceExpected, '}', '\\' + input.slice(sequenceStart, index--))
         else raise(null, errors.hexadecimalDigitExpected, '\\' + input.slice(sequenceStart, index))
     }
 
-    var codepoint = parseInt(input.slice(escStart, index - 1) || '0', 16)
-    var frag = '\\' + input.slice(sequenceStart, index)
+    const codepoint = parseInt(input.slice(escStart, index - 1) || '0', 16)
+    const frag = '\\' + input.slice(sequenceStart, index)
 
     if (codepoint > 0x10ffff) {
         raise(null, errors.tooLargeCodepoint, frag)
@@ -1127,7 +1132,7 @@ function readUnicodeEscapeSequence() {
 
 // Translate escape sequences to the actual characters.
 function readEscapeSequence() {
-    var sequenceStart = index
+    const sequenceStart = index
     switch (input.charAt(index)) {
         // Lua allow the following escape sequences.
         case 'a':
@@ -1173,8 +1178,8 @@ function readEscapeSequence() {
             // \ddd, where ddd is a sequence of up to three decimal digits.
             while (isDecDigit(input.charCodeAt(index)) && index - sequenceStart < 3) ++index
 
-            var frag = input.slice(sequenceStart, index)
-            var ddd = parseInt(frag, 10)
+            const frag = input.slice(sequenceStart, index)
+            const ddd = parseInt(frag, 10)
             if (ddd > 255) {
                 raise(null, errors.decimalEscapeTooLarge, '\\' + ddd)
             }
@@ -1226,7 +1231,7 @@ function scanComment() {
     tokenStart = index
     index += 2 // --
 
-    var character = input.charAt(index),
+    const character = input.charAt(index),
         content = '',
         isLong = false,
         commentStart = index,
@@ -1249,7 +1254,7 @@ function scanComment() {
     }
 
     if (options.comments) {
-        var node = ast.comment(content, input.slice(tokenStart, index))
+        const node = ast.comment(content, input.slice(tokenStart, index))
 
         // `Marker`s depend on tokens available in the parser and as comments are
         // intercepted in the lexer all location data is set manually.
@@ -1271,10 +1276,10 @@ function scanComment() {
 // then appending until an equal depth is found.
 
 function readLongString(isComment) {
-    var level = 0,
+    const level = 0,
         content = '',
-        terminator = false,
-        character,
+        terminator = false;
+    let character,
         stringStart,
         firstLine = line
 
@@ -1302,7 +1307,7 @@ function readLongString(isComment) {
         // if it matches.
         if (']' === character) {
             terminator = true
-            for (var i = 0; i < level; ++i) {
+            for (const i = 0; i < level; ++i) {
                 if ('=' !== input.charAt(index + i)) terminator = false
             }
             if (']' !== input.charAt(index + level)) terminator = false
@@ -1445,7 +1450,7 @@ function isBlockFollow(token) {
 
 // Store each block scope as a an array of identifier names. Each scope is
 // stored in an FILO-array.
-var scopes,
+let scopes,
     // The current scope index
     scopeDepth,
     // A list of all global identifier nodes.
@@ -1453,14 +1458,14 @@ var scopes,
 
 // Create a new scope inheriting all declarations from the previous scope.
 function createScope() {
-    var scope = scopes[scopeDepth++].slice()
+    const scope = scopes[scopeDepth++].slice()
     scopes.push(scope)
     if (options.onCreateScope) options.onCreateScope()
 }
 
 // Exit and remove the current scope.
 function destroyScope() {
-    var scope = scopes.pop()
+    const scope = scopes.pop()
     --scopeDepth
     if (options.onDestroyScope) options.onDestroyScope()
 }
@@ -1498,7 +1503,7 @@ function scopeHasName(name) {
 // `loc` and `range` data. Once a `Marker` is popped off the list an end
 // location is added and the data is attached to a syntax node.
 
-var locations = [],
+let locations = [],
     trackLocations
 
 function createLocationMarker() {
@@ -1535,7 +1540,7 @@ Marker.prototype.complete = function() {
 
 Marker.prototype.bless = function(node) {
     if (this.loc) {
-        var loc = this.loc
+        const loc = this.loc
         node.loc = {
             start: {
                 line: loc.start.line,
@@ -1572,7 +1577,7 @@ function FullFlowContext() {
 }
 
 FullFlowContext.prototype.isInLoop = function() {
-    var i = this.scopes.length
+    const i = this.scopes.length
     while (i-- > 0) {
         if (this.scopes[i].isLoop) return true
     }
@@ -1580,7 +1585,7 @@ FullFlowContext.prototype.isInLoop = function() {
 }
 
 FullFlowContext.prototype.pushScope = function(isLoop) {
-    var scope = {
+    const scope = {
         labels: {},
         locals: [],
         deferredGotos: [],
@@ -1590,8 +1595,8 @@ FullFlowContext.prototype.pushScope = function(isLoop) {
 }
 
 FullFlowContext.prototype.popScope = function() {
-    for (var i = 0; i < this.pendingGotos.length; ++i) {
-        var theGoto = this.pendingGotos[i]
+    for (const i = 0; i < this.pendingGotos.length; ++i) {
+        const theGoto = this.pendingGotos[i]
         if (theGoto.maxDepth >= this.scopes.length)
             if (--theGoto.maxDepth <= 0) raise(theGoto.token, errors.labelNotVisible, theGoto.target)
     }
@@ -1600,10 +1605,10 @@ FullFlowContext.prototype.popScope = function() {
 }
 
 FullFlowContext.prototype.addGoto = function(target, token) {
-    var localCounts = []
+    const localCounts = []
 
-    for (var i = 0; i < this.scopes.length; ++i) {
-        var scope = this.scopes[i]
+    for (const i = 0; i < this.scopes.length; ++i) {
+        const scope = this.scopes[i]
         localCounts.push(scope.locals.length)
         if (Object.prototype.hasOwnProperty.call(scope.labels, target)) return
     }
@@ -1617,15 +1622,15 @@ FullFlowContext.prototype.addGoto = function(target, token) {
 }
 
 FullFlowContext.prototype.addLabel = function(name, token) {
-    var scope = this.currentScope()
+    const scope = this.currentScope()
 
     if (Object.prototype.hasOwnProperty.call(scope.labels, name)) {
         raise(token, errors.labelAlreadyDefined, name, scope.labels[name].line)
     } else {
-        var newGotos = []
+        const newGotos = []
 
-        for (var i = 0; i < this.pendingGotos.length; ++i) {
-            var theGoto = this.pendingGotos[i]
+        for (const i = 0; i < this.pendingGotos.length; ++i) {
+            const theGoto = this.pendingGotos[i]
 
             if (theGoto.maxDepth >= this.scopes.length && theGoto.target === name) {
                 if (theGoto.localCounts[this.scopes.length - 1] < scope.locals.length) {
@@ -1658,10 +1663,10 @@ FullFlowContext.prototype.currentScope = function() {
 }
 
 FullFlowContext.prototype.raiseDeferredErrors = function() {
-    var scope = this.currentScope()
-    var bads = scope.deferredGotos
-    for (var i = 0; i < bads.length; ++i) {
-        var theGoto = bads[i]
+    const scope = this.currentScope()
+    const bads = scope.deferredGotos
+    for (const i = 0; i < bads.length; ++i) {
+        const theGoto = bads[i]
         raise(
             theGoto.token,
             errors.gotoJumpInLocalScope,
@@ -1691,8 +1696,8 @@ LoopFlowContext.prototype.pushScope = function(isLoop) {
 }
 
 LoopFlowContext.prototype.popScope = function() {
-    var levels = this.loopLevels
-    var levlen = levels.length
+    const levels = this.loopLevels
+    const levlen = levels.length
     if (levlen) {
         if (levels[levlen - 1] === this.level) levels.pop()
     }
@@ -1722,10 +1727,10 @@ function parseChunk() {
     next()
     markLocation()
     if (options.scope) createScope()
-    var flowContext = makeFlowContext()
+    const flowContext = makeFlowContext()
     flowContext.allowVararg = true
     flowContext.pushScope()
-    var body = parseBlock(flowContext)
+    const body = parseBlock(flowContext)
     flowContext.popScope()
     if (options.scope) destroyScope()
     if (EOF !== token.type) unexpected(token)
@@ -1740,7 +1745,7 @@ function parseChunk() {
 //     block ::= {stat} [retstat]
 
 function parseBlock(flowContext) {
-    var block = [],
+    let block = [],
         statement
 
     while (!isBlockFollow(token)) {
@@ -1797,7 +1802,7 @@ function parseStatement(flowContext) {
                 return parseReturnStatement(flowContext)
             case 'function':
                 next()
-                var name = parseFunctionName()
+                const name = parseFunctionName()
                 return parseFunctionDeclaration(name)
             case 'while':
                 next()
@@ -1843,7 +1848,7 @@ function parseStatement(flowContext) {
 //     label ::= '::' Name '::'
 
 function parseLabelStatement(flowContext) {
-    var nameToken = token,
+    const nameToken = token,
         label = parseIdentifier()
 
     if (options.scope) {
@@ -1867,7 +1872,7 @@ function parseBreakStatement() {
 //     goto ::= 'goto' Name
 
 function parseGotoStatement(flowContext) {
-    var name = token.value,
+    const name = token.value,
         gotoToken = previousToken,
         label = parseIdentifier()
 
@@ -1880,7 +1885,7 @@ function parseGotoStatement(flowContext) {
 function parseDoStatement(flowContext) {
     if (options.scope) createScope()
     flowContext.pushScope()
-    var body = parseBlock(flowContext)
+    const body = parseBlock(flowContext)
     flowContext.popScope()
     if (options.scope) destroyScope()
     expect('end')
@@ -1890,11 +1895,11 @@ function parseDoStatement(flowContext) {
 //     while ::= 'while' exp 'do' block 'end'
 
 function parseWhileStatement(flowContext) {
-    var condition = parseExpectedExpression(flowContext)
+    const condition = parseExpectedExpression(flowContext)
     expect('do')
     if (options.scope) createScope()
     flowContext.pushScope(true)
-    var body = parseBlock(flowContext)
+    const body = parseBlock(flowContext)
     flowContext.popScope()
     if (options.scope) destroyScope()
     expect('end')
@@ -1906,10 +1911,10 @@ function parseWhileStatement(flowContext) {
 function parseRepeatStatement(flowContext) {
     if (options.scope) createScope()
     flowContext.pushScope(true)
-    var body = parseBlock(flowContext)
+    const body = parseBlock(flowContext)
     expect('until')
     flowContext.raiseDeferredErrors()
-    var condition = parseExpectedExpression(flowContext)
+    const condition = parseExpectedExpression(flowContext)
     flowContext.popScope()
     if (options.scope) destroyScope()
     return finishNode(ast.repeatStatement(condition, body))
@@ -1918,10 +1923,10 @@ function parseRepeatStatement(flowContext) {
 //     retstat ::= 'return' [exp {',' exp}] [';']
 
 function parseReturnStatement(flowContext) {
-    var expressions = []
+    const expressions = []
 
     if ('end' !== token.value) {
-        var expression = parseExpression(flowContext)
+        const expression = parseExpression(flowContext)
         if (null != expression) {
             expressions.push(expression)
             while (consume(',')) {
@@ -1938,7 +1943,7 @@ function parseReturnStatement(flowContext) {
 //     elif ::= 'elseif' exp 'then' block
 
 function parseIfStatement(flowContext) {
-    var clauses = [],
+    let clauses = [],
         condition,
         body,
         marker
@@ -1998,8 +2003,8 @@ function parseIfStatement(flowContext) {
 //     explist ::= exp {',' exp}
 
 function parseForStatement(flowContext) {
-    var variable = parseIdentifier(),
-        body
+    const variable = parseIdentifier();
+    let body
 
     // The start-identifier is local.
 
@@ -2012,12 +2017,12 @@ function parseForStatement(flowContext) {
     // Numeric For Statement.
     if (consume('=')) {
         // Start expression
-        var start = parseExpectedExpression(flowContext)
+        const start = parseExpectedExpression(flowContext)
         expect(',')
         // End expression
-        var end = parseExpectedExpression(flowContext)
+        const end = parseExpectedExpression(flowContext)
         // Optional step expression
-        var step = consume(',') ? parseExpectedExpression(flowContext) : null
+        const step = consume(',') ? parseExpectedExpression(flowContext) : null
 
         expect('do')
         flowContext.pushScope(true)
@@ -2031,7 +2036,7 @@ function parseForStatement(flowContext) {
     // If not, it's a Generic For Statement
     else {
         // The namelist can contain one or more identifiers.
-        var variables = [variable]
+        const variables = [variable]
         while (consume(',')) {
             variable = parseIdentifier()
             // Each variable in the namelist is locally scoped.
@@ -2039,11 +2044,11 @@ function parseForStatement(flowContext) {
             variables.push(variable)
         }
         expect('in')
-        var iterators = []
+        const iterators = []
 
         // One or more expressions in the explist.
         do {
-            var expression = parseExpectedExpression(flowContext)
+            const expression = parseExpectedExpression(flowContext)
             iterators.push(expression)
         } while (consume(','))
 
@@ -2069,11 +2074,11 @@ function parseForStatement(flowContext) {
 //        | 'local' Name {',' Name} ['=' exp {',' exp}]
 
 function parseLocalStatement(flowContext) {
-    var name,
+    let name,
         declToken = previousToken
 
     if (Identifier === token.type) {
-        var variables = [],
+        const variables = [],
             init = []
 
         do {
@@ -2085,7 +2090,7 @@ function parseLocalStatement(flowContext) {
 
         if (consume('=')) {
             do {
-                var expression = parseExpectedExpression(flowContext)
+                const expression = parseExpectedExpression(flowContext)
                 init.push(expression)
             } while (consume(','))
         }
@@ -2094,7 +2099,7 @@ function parseLocalStatement(flowContext) {
         // Therefore assignments can't use their declarator. And the identifiers
         // shouldn't be added to the scope until the statement is complete.
         if (options.scope) {
-            for (var i = 0, l = variables.length; i < l; ++i) {
+            for (const i = 0, l = variables.length; i < l; ++i) {
                 scopeIdentifier(variables[i])
             }
         }
@@ -2118,8 +2123,8 @@ function parseLocalStatement(flowContext) {
 }
 
 //     assignment ::= varlist '=' explist
-//     var ::= Name | prefixexp '[' exp ']' | prefixexp '.' Name
-//     varlist ::= var {',' var}
+//     const ::= Name | prefixexp '[' exp ']' | prefixexp '.' Name
+//     varlist ::= const {',' const}
 //     explist ::= exp {',' exp}
 //
 //     call ::= callexp
@@ -2128,12 +2133,11 @@ function parseLocalStatement(flowContext) {
 function parseAssignmentOrCallStatement(flowContext) {
     // Keep a reference to the previous token for better error messages in case
     // of invalid statement
-    var previous = token,
-        marker,
-        startMarker
-    var lvalue, base, name
+    const previous = token;
+    let marker, startMarker
+    let lvalue, base, name
 
-    var targets = []
+    const targets = []
 
     if (trackLocations) startMarker = createLocationMarker()
 
@@ -2156,7 +2160,7 @@ function parseAssignmentOrCallStatement(flowContext) {
         }
 
         both: for (;;) {
-            var newBase
+            let newBase
 
             switch (StringLiteral === token.type ? '"' : token.value) {
                 case '.':
@@ -2196,7 +2200,7 @@ function parseAssignmentOrCallStatement(flowContext) {
 
     expect('=')
 
-    var values = []
+    const values = []
 
     do {
         values.push(parseExpectedExpression(flowContext))
@@ -2212,7 +2216,7 @@ function parseAssignmentOrCallStatement(flowContext) {
 
 function parseIdentifier() {
     markLocation()
-    var identifier = token.value
+    const identifier = token.value
     if (Identifier !== token.type) raiseUnexpectedToken('<name>', token)
     next()
     return finishNode(ast.identifier(identifier))
@@ -2229,10 +2233,10 @@ function parseIdentifier() {
 //     parlist ::= Name {',' Name} | [',' '...'] | '...'
 
 function parseFunctionDeclaration(name, isLocal) {
-    var flowContext = makeFlowContext()
+    const flowContext = makeFlowContext()
     flowContext.pushScope()
 
-    var parameters = []
+    const parameters = []
     expect('(')
 
     // The declaration has arguments
@@ -2241,7 +2245,7 @@ function parseFunctionDeclaration(name, isLocal) {
         // with a vararg.
         while (true) {
             if (Identifier === token.type) {
-                var parameter = parseIdentifier()
+                const parameter = parseIdentifier()
                 // Function parameters are local.
                 if (options.scope) scopeIdentifier(parameter)
 
@@ -2261,7 +2265,7 @@ function parseFunctionDeclaration(name, isLocal) {
         }
     }
 
-    var body = parseBlock(flowContext)
+    const body = parseBlock(flowContext)
     flowContext.popScope()
     expect('end')
     if (options.scope) destroyScope()
@@ -2275,7 +2279,7 @@ function parseFunctionDeclaration(name, isLocal) {
 //     Name {'.' Name} [':' Name]
 
 function parseFunctionName() {
-    var base, name, marker
+    let base, name, marker
 
     if (trackLocations) marker = createLocationMarker()
     base = parseIdentifier()
@@ -2308,7 +2312,7 @@ function parseFunctionName() {
 //     fieldsep ::= ',' | ';'
 
 function parseTableConstructor(flowContext) {
-    var fields = [],
+    let fields = [],
         key,
         value
 
@@ -2363,14 +2367,14 @@ function parseTableConstructor(flowContext) {
 //
 
 function parseExpression(flowContext) {
-    var expression = parseSubExpression(0, flowContext)
+    const expression = parseSubExpression(0, flowContext)
     return expression
 }
 
 // Parse an expression expecting it to be valid.
 
 function parseExpectedExpression(flowContext) {
-    var expression = parseExpression(flowContext)
+    const expression = parseExpression(flowContext)
     if (null == expression) raiseUnexpectedToken('<expression>', token)
     else return expression
 }
@@ -2384,7 +2388,7 @@ function parseExpectedExpression(flowContext) {
 // the expensive CompareICStub which took ~8% of the parse time.
 
 function binaryPrecedence(operator) {
-    var charCode = operator.charCodeAt(0),
+    const charCode = operator.charCodeAt(0),
         length = operator.length
 
     if (1 === length) {
@@ -2438,7 +2442,7 @@ function binaryPrecedence(operator) {
 //     exp ::= (unop exp | primary | prefixexp ) { binop exp }
 
 function parseSubExpression(minPrecedence, flowContext) {
-    var operator = token.value,
+    let operator = token.value,
         // The left-hand side in binary operations.
         expression,
         marker
@@ -2449,7 +2453,7 @@ function parseSubExpression(minPrecedence, flowContext) {
     if (isUnary(token)) {
         markLocation()
         next()
-        var argument = parseSubExpression(10, flowContext)
+        const argument = parseSubExpression(10, flowContext)
         if (argument == null) raiseUnexpectedToken('<expression>', token)
         expression = finishNode(ast.unaryExpression(operator, argument))
     }
@@ -2465,7 +2469,7 @@ function parseSubExpression(minPrecedence, flowContext) {
     // This is not a valid left hand expression.
     if (null == expression) return null
 
-    var precedence
+    let precedence
     while (true) {
         operator = token.value
 
@@ -2475,7 +2479,7 @@ function parseSubExpression(minPrecedence, flowContext) {
         // Right-hand precedence operators
         if ('^' === operator || '..' === operator) --precedence
         next()
-        var right = parseSubExpression(precedence, flowContext)
+        const right = parseSubExpression(precedence, flowContext)
         if (null == right) raiseUnexpectedToken('<expression>', token)
         // Push in the marker created before the loop to wrap its entirety.
         if (trackLocations) locations.push(marker)
@@ -2491,7 +2495,7 @@ function parseSubExpression(minPrecedence, flowContext) {
 //     args ::= '(' [explist] ')' | tableconstructor | String
 
 function parsePrefixExpressionPart(base, marker, flowContext) {
-    var expression, identifier
+    let expression, identifier
 
     if (Punctuator === token.type) {
         switch (token.value) {
@@ -2529,7 +2533,7 @@ function parsePrefixExpressionPart(base, marker, flowContext) {
 }
 
 function parsePrefixExpression(flowContext) {
-    var base, name, marker
+    let base, name, marker
 
     if (trackLocations) marker = createLocationMarker()
 
@@ -2548,7 +2552,7 @@ function parsePrefixExpression(flowContext) {
 
     // The suffix
     for (;;) {
-        var newBase = parsePrefixExpressionPart(base, marker, flowContext)
+        const newBase = parsePrefixExpressionPart(base, marker, flowContext)
         if (newBase === null) break
         base = newBase
     }
@@ -2568,8 +2572,8 @@ function parseCallExpression(base, flowContext) {
                 next()
 
                 // List of expressions
-                var expressions = []
-                var expression = parseExpression(flowContext)
+                const expressions = []
+                const expression = parseExpression(flowContext)
                 if (null != expression) {
                     expressions.push(expression)
                     while (consume(',')) {
@@ -2584,7 +2588,7 @@ function parseCallExpression(base, flowContext) {
             case '{':
                 markLocation()
                 next()
-                var table = parseTableConstructor(flowContext)
+                const table = parseTableConstructor(flowContext)
                 return finishNode(ast.tableCallExpression(base, table))
         }
     } else if (StringLiteral === token.type) {
@@ -2598,10 +2602,10 @@ function parseCallExpression(base, flowContext) {
 //          | functiondef | tableconstructor | '...'
 
 function parsePrimaryExpression(flowContext) {
-    var literals = StringLiteral | NumericLiteral | BooleanLiteral | NilLiteral | VarargLiteral,
+    const literals = StringLiteral | NumericLiteral | BooleanLiteral | NilLiteral | VarargLiteral,
         value = token.value,
-        type = token.type,
-        marker
+        type = token.type;
+    let marker
 
     if (trackLocations) marker = createLocationMarker()
 
@@ -2611,7 +2615,7 @@ function parsePrimaryExpression(flowContext) {
 
     if (type & literals) {
         pushLocation(marker)
-        var raw = input.slice(token.range[0], token.range[1])
+        const raw = input.slice(token.range[0], token.range[1])
         next()
         return finishNode(ast.literal(type, value, raw))
     } else if (Keyword === type && 'function' === value) {
@@ -2645,7 +2649,7 @@ function parsePrimaryExpression(flowContext) {
 //
 // Example:
 //
-//     var parser = require('luaparser');
+//     const parser = require('luaparser');
 //     parser.parse('i = 0');
 
 const versionFeatures = {
@@ -2747,7 +2751,7 @@ export function end(_input) {
     // Initialize with a lookahead token.
     lookahead = lex()
 
-    var chunk = parseChunk()
+    const chunk = parseChunk()
     if (options.comments) chunk.comments = comments
     if (options.scope) chunk.globals = globals
 
