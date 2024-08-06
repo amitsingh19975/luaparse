@@ -34,7 +34,7 @@ export const defaultOptions = {
     // Encoding mode: how to interpret code units higher than U+007F in input
     encodingMode: 'none',
     // Default error reporting
-    /** @type {((message: string, span: { line: number, column: number, length: number } ) => void) | undefined} */
+    /** @type {((message: string, span: { line: number, column: number, len: number } ) => void) | undefined} */
     onError: undefined
 }
 
@@ -545,10 +545,11 @@ function raise(token, ...args) {
     /** @type {SyntaxError & { index: number, line: number, column: number }} */
     let error;
     let col = 0;
-    const length = index - tokenStart - 1;
+    let length = 0;
 
     if (token === null || typeof token.line === 'undefined') {
         col = index - lineStart + 1
+        length = index - tokenStart - 1;
         error = fixupError(new SyntaxError(sprintf('[%1:%2] %3', line, col, message)))
         error.index = index
         error.line = line
@@ -559,6 +560,7 @@ function raise(token, ...args) {
         error.line = token.line
         error.index = token.range[0]
         error.column = col
+        length = token.range[1] - token.range[0];
     }
     if (defaultOptions.onError) {
         defaultOptions.onError(message, {
