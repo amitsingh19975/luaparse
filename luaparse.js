@@ -561,7 +561,7 @@ function raise(token, ...args) {
         error.column = col
     }
     if (defaultOptions.onError) {
-        defaultOptions.onError(error.message, {
+        defaultOptions.onError(message, {
             column: col,
             line: error.line,
             len: length
