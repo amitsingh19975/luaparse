@@ -32,7 +32,10 @@ export const defaultOptions = {
     // '5.1', '5.2', '5.3').
     luaVersion: '5.1',
     // Encoding mode: how to interpret code units higher than U+007F in input
-    encodingMode: 'none'
+    encodingMode: 'none',
+    // Default error reporting
+    /** @type {((message: string, span: { line: number, column: number, length: number } ) => void) | undefined} */
+    onError: undefined
 }
 
 function encodeUTF8(codepoint, highMask) {
@@ -537,9 +540,12 @@ function fixupError(e) {
 //     // [1:0] expected [ near (
 //     raise(token, "expected %1 near %2", '[', token.value);
 
-function raise(token) {
-    const message = sprintf.apply(null, slice.call(arguments, 1));
-    let error, col
+function raise(token, ...args) {
+    const message = sprintf.apply(null, args);
+    /** @type {SyntaxError & { index: number, line: number, column: number }} */
+    let error;
+    let col = 0;
+    const length = index - tokenStart - 1;
 
     if (token === null || typeof token.line === 'undefined') {
         col = index - lineStart + 1
@@ -553,6 +559,13 @@ function raise(token) {
         error.line = token.line
         error.index = token.range[0]
         error.column = col
+    }
+    if (defaultOptions.onError) {
+        defaultOptions.onError(error.message, {
+            column: col,
+            line: error.line,
+            len: length
+        });
     }
     throw error
 }
@@ -791,15 +804,6 @@ function scanIdentifierOrKeyword() {
     // loop for performance reasons.
     while (isIdentifierPart(input.charCodeAt(++index)));
     value = encodingMode.fixup(input.slice(tokenStart, index))
-    if (value.startsWith('$')) {
-        let count = 0;
-        for (const c of value) {
-            if (c !== '$') break;
-            ++count;
-        }
-        if (count > 2) raise(null, errors.tooManyDollars, value);
-        if (count !== value.length && value !== '$self') raise(null, errors.invalidDollarIdentifier, value);
-    }
 
     // Decide on the token type and possibly cast the value.
     if (isKeyword(value)) {
@@ -814,13 +818,25 @@ function scanIdentifierOrKeyword() {
         type = Identifier
     }
 
-    return {
+    const tempToken = {
         type: type,
         value: value,
         line: line,
         lineStart: lineStart,
         range: [tokenStart, index]
+    };
+
+    if (value.startsWith('$')) {
+        let count = 0;
+        for (const c of value) {
+            if (c !== '$') break;
+            ++count;
+        }
+        if (count > 2) raise(tempToken, errors.tooManyDollars, value);
+        if (count !== value.length && value !== '$self') raise(tempToken, errors.invalidDollarIdentifier, value);
     }
+
+    return tempToken;
 }
 
 // Once a punctuator reaches this function it should already have been
@@ -2685,42 +2701,47 @@ const versionFeatures = {
 }
 
 export function parse(_input, _options) {
-    if ('undefined' === typeof _options && 'object' === typeof _input) {
-        _options = _input
-        _input = undefined
-    }
-    if (!_options) _options = {}
+	try {
+		if ('undefined' === typeof _options && 'object' === typeof _input) {
+			_options = _input
+			_input = undefined
+		}
+		if (!_options) _options = {}
 
-    input = _input || ''
-    options = assign({}, defaultOptions, _options)
+		input = _input || ''
+		options = assign({}, defaultOptions, _options)
 
-    // Rewind the lexer
-    index = 0
-    line = 1
-    lineStart = 0
-    length = input.length
-    // When tracking identifier scope, initialize with an empty scope.
-    scopes = [[]]
-    scopeDepth = 0
-    globals = []
-    locations = []
+		// Rewind the lexer
+		index = 0
+		line = 1
+		lineStart = 0
+		length = input.length
+		// When tracking identifier scope, initialize with an empty scope.
+		scopes = [[]]
+		scopeDepth = 0
+		globals = []
+		locations = []
 
-    if (!Object.prototype.hasOwnProperty.call(versionFeatures, options.luaVersion)) {
-        throw new Error(sprintf("Lua version '%1' not supported", options.luaVersion))
-    }
+		if (!Object.prototype.hasOwnProperty.call(versionFeatures, options.luaVersion)) {
+			throw new Error(sprintf("Lua version '%1' not supported", options.luaVersion))
+		}
 
-    features = assign({}, versionFeatures[options.luaVersion])
-    if (options.extendedIdentifiers !== void 0) features.extendedIdentifiers = !!options.extendedIdentifiers
+		features = assign({}, versionFeatures[options.luaVersion])
+		if (options.extendedIdentifiers !== void 0) features.extendedIdentifiers = !!options.extendedIdentifiers
 
-    if (!Object.prototype.hasOwnProperty.call(encodingModes, options.encodingMode)) {
-        throw new Error(sprintf("Encoding mode '%1' not supported", options.encodingMode))
-    }
+		if (!Object.prototype.hasOwnProperty.call(encodingModes, options.encodingMode)) {
+			throw new Error(sprintf("Encoding mode '%1' not supported", options.encodingMode))
+		}
 
-    encodingMode = encodingModes[options.encodingMode]
+		encodingMode = encodingModes[options.encodingMode]
 
-    if (options.comments) comments = []
-    if (!options.wait) return end()
-    return undefined
+		if (options.comments) comments = []
+		if (!options.wait) return end()
+		return undefined
+	} catch (e) {
+		if (defaultOptions.onError) return;
+		throw e;
+	}
 }
 
 // Write to the source code buffer without beginning the parse.
