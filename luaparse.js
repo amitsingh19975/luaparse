@@ -828,7 +828,7 @@ function scanIdentifierOrKeyword() {
         range: [tokenStart, index]
     };
 
-    if (typeof (value === 'string') && value.startsWith('$')) {
+    if (typeof (value) === 'string' && value.startsWith('$')) {
         let count = 0;
         for (const c of value) {
             if (c !== '$') break;
