@@ -799,7 +799,7 @@ function skipWhiteSpace() {
 // previous case matched.
 
 function scanIdentifierOrKeyword() {
-    /** @type {string} */
+    /** @type {string | number | boolean} */
     let value, type
 
     // Slicing the input string is prefered before string concatenation in a
@@ -828,7 +828,7 @@ function scanIdentifierOrKeyword() {
         range: [tokenStart, index]
     };
 
-    if (value.startsWith('$')) {
+    if (typeof (value === 'string') && value.startsWith('$')) {
         let count = 0;
         for (const c of value) {
             if (c !== '$') break;
